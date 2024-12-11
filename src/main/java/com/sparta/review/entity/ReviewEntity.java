@@ -1,13 +1,16 @@
 package com.sparta.review.entity;
 
+import com.sparta.review.dto.ReviewRequestDto;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Data
 @NoArgsConstructor
-@Table(name = "review")
+@Table(name = "Review")
 public class ReviewEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,6 +27,22 @@ public class ReviewEntity {
 
     private String imageUrl;
 
-    @Column(nullable = false)
-    private String createdAt;
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @ManyToOne
+    @JoinColumn(name = "productId", nullable = false)
+    private ProductEntity product;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
+
+    public ReviewEntity(ReviewRequestDto requestDto, ProductEntity product) {
+        this.userId = requestDto.getUserId();
+        this.score = requestDto.getScore();
+        this.content = requestDto.getContent();
+        this.product = product;
+    }
 }
