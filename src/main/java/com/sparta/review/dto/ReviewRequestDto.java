@@ -5,11 +5,8 @@ import lombok.Setter;
 
 @Setter
 @Getter
-public class RevivewResponseDto {
-    private long id;
+public class ReviewRequestDto {
+    private String userId;
     private int score;
     private String content;
-    private String imageUrl;
-    private String createdAt;
-
 }
