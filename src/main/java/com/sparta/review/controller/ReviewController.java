@@ -14,9 +14,11 @@ public class ReviewController {
 
     private final ReviewService reviewService;
 
-    @GetMapping("/{productId}/reviews?cursor={cursor}&size={size}")
+    @GetMapping("/{productId}/reviews")
     public Map<String, Object> getReviews(
-            @PathVariable int cursor, @PathVariable long productId, @PathVariable int size) {
+            @PathVariable Long productId,
+            @RequestParam int cursor,
+            @RequestParam int size) {
 
         return reviewService.getReviews(productId, cursor, size);
     }
@@ -24,6 +26,7 @@ public class ReviewController {
     @PostMapping("/{productId}/reviews")
     public String addReview(@PathVariable long productId,
                             @RequestBody ReviewRequestDto reviewRequestDto) {
+        System.out.println("productId = " + productId);
         return reviewService.addReview(productId, reviewRequestDto);
     }
 

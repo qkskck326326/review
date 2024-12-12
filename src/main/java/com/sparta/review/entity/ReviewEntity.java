@@ -31,7 +31,7 @@ public class ReviewEntity {
     private LocalDateTime createdAt;
 
     @ManyToOne
-    @JoinColumn(name = "productId", nullable = false)
+    @JoinColumn(name = "product_id", nullable = false)
     private ProductEntity product;
 
     @PrePersist

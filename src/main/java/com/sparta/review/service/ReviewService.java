@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -25,9 +26,26 @@ public class ReviewService {
     private final ProductRepository productRepository;
 
     public Map<String, Object> getReviews(Long productId, int cursor, int size) {
+//        // 해당 상품이 있는지 확인
+//        if(productRepository.existsById(productId)) {
+//            Map<String, Object> result = new HashMap<>();
+//            result.put("message", "상품이 존재하지 않습니다.");
+//            return result;
+//        }
+//        // 등록된 리뷰가 있는지 확인
+//        if(reviewRepository.existsById(productId)) {
+//            Map<String, Object> result = new HashMap<>();
+//            result.put("message", "등록된 리뷰가 없습니다.");
+//            return result;
+//        }
         // 페이징 계산 및 계산 결과에 따른 조회
         Pageable pageable = PageRequest.of(cursor / size, size);
-        Page<ReviewEntity> reviewPage = reviewRepository.findByProductId(productId, pageable);
+        Page<ReviewEntity> reviewPage = reviewRepository.findByProductId(productId, pageable).orElse(null);
+        if (reviewPage.isEmpty()) {
+            Map<String, Object> result = new HashMap<>();
+            result.put("message", "등록된 리뷰가 없습니다.");
+            return result;
+        }
 
         // 조회값 리스트로 변환
         List<ReviewResponseDto> reviewDtos = reviewPage.getContent().stream()
@@ -41,12 +59,14 @@ public class ReviewService {
                 ))
                 .collect(Collectors.toList());
 
+        // 리뷰 갯수
+        long totalCount = productRepository.findReviewCountById(productId).orElse(0L);
+        
         // 점수평균 계산
-        int totalCount = productRepository.getReviewCountByProductId(productId);
         double averageScore = reviewDtos.stream().mapToInt(ReviewResponseDto::getScore).average().orElse(0.0);
 
         // 결과 저장
-        Map<String, Object> response = new HashMap<>();
+        Map<String, Object> response = new LinkedHashMap<>();
         response.put("totalCount", totalCount);
         response.put("score", averageScore);
         response.put("cursor", cursor + reviewDtos.size());
@@ -56,9 +76,13 @@ public class ReviewService {
     }
 
     public String addReview(long productId, ReviewRequestDto reviewRequestDto){
+        String userId = reviewRequestDto.getUserId();
+        if (reviewRepository.existsByUserIdAndProductId(userId, productId)){
+            return "이미 해당상품에 대한 리뷰를 작성한 사용자입니다.";
+        }
         ProductEntity product;
         try {
-            product = reviewRepository.findById(productId)
+            product = productRepository.findById(productId)
                     .orElseThrow(IllegalArgumentException::new);
         } catch (IllegalArgumentException e) {
             return "잘못된 상품 아이디입니다.";
